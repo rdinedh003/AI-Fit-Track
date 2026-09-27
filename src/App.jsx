@@ -1,28 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
-import ThreeDBody from "./ThreeDBody";
 
 function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState(null);
 
-  const [intro, setIntro] = useState(true);
-  const [introProgress, setIntroProgress] = useState(0);
-  const [introFinished, setIntroFinished] = useState(false);
-
   const [mouse, setMouse] = useState({
-    x: 50,
-    y: 50,
+    x: 0,
+    y: 0,
   });
 
-  const [visibleSections, setVisibleSections] = useState({});
+  const [score, setScore] = useState(72);
+  const [steps, setSteps] = useState(6842);
+  const [water, setWater] = useState(1.8);
+  const [workouts, setWorkouts] = useState(2);
+  const [activeFeature, setActiveFeature] = useState(null);
 
-  const sectionRefs = useRef([]);
-
-  // -----------------------------
-  // SAVED LOGIN
-  // -----------------------------
   useEffect(() => {
     const savedUser = localStorage.getItem("aiFitLoggedInUser");
 
@@ -37,45 +31,14 @@ function App() {
     }
   }, []);
 
-  // -----------------------------
-  // CINEMATIC INTRO
-  // -----------------------------
-  useEffect(() => {
-    if (!intro) return;
-
-    const startTime = Date.now();
-    const duration = 2200;
-
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(
-        100,
-        Math.round((elapsed / duration) * 100)
-      );
-
-      setIntroProgress(progress);
-
-      if (progress >= 100) {
-        clearInterval(timer);
-
-        setTimeout(() => {
-          setIntroFinished(true);
-          setIntro(false);
-        }, 100);
-      }
-    }, 25);
-
-    return () => clearInterval(timer);
-  }, [intro]);
-
-  // -----------------------------
-  // MOUSE PARALLAX
-  // -----------------------------
   useEffect(() => {
     const handleMouseMove = (event) => {
+      const x = event.clientX / window.innerWidth - 0.5;
+      const y = event.clientY / window.innerHeight - 0.5;
+
       setMouse({
-        x: (event.clientX / window.innerWidth) * 100,
-        y: (event.clientY / window.innerHeight) * 100,
+        x,
+        y,
       });
     };
 
@@ -86,65 +49,21 @@ function App() {
     };
   }, []);
 
-  // -----------------------------
-  // SCROLL REVEAL
-  // -----------------------------
   useEffect(() => {
-    if (!introFinished) return;
+    const timer = setInterval(() => {
+      setScore((prev) => {
+        if (prev >= 92) return 72;
+        return prev + 1;
+      });
+    }, 180);
 
-    const observers = [];
+    return () => clearInterval(timer);
+  }, []);
 
-    sectionRefs.current.forEach((section, index) => {
-      if (!section) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setVisibleSections((prev) => ({
-                ...prev,
-                [index]: true,
-              }));
-            }
-          });
-        },
-        {
-          threshold: 0.12,
-        }
-      );
-
-      observer.observe(section);
-      observers.push(observer);
-    });
-
-    return () => {
-      observers.forEach((observer) => observer.disconnect());
-    };
-  }, [introFinished]);
-
-  const skipIntro = () => {
-    setIntroProgress(100);
-    setIntroFinished(true);
-    setIntro(false);
-  };
-
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
-  // -----------------------------
-  // LOGGED IN
-  // -----------------------------
   if (user) {
     return <Dashboard user={user} />;
   }
 
-  // -----------------------------
-  // AUTH
-  // -----------------------------
   if (showAuth) {
     return (
       <Auth
@@ -155,1292 +74,1746 @@ function App() {
     );
   }
 
+  const features = [
+    {
+      icon: "🧠",
+      title: "AI Fitness Coach",
+      description:
+        "Get intelligent fitness guidance based on your goals and activity.",
+    },
+    {
+      icon: "🧍",
+      title: "3D Body System",
+      description:
+        "Explore an interactive 3D body and understand different muscle zones.",
+    },
+    {
+      icon: "📊",
+      title: "Progress Analytics",
+      description:
+        "Track workouts, steps, hydration and fitness progress over time.",
+    },
+    {
+      icon: "🏆",
+      title: "XP & Achievements",
+      description:
+        "Complete activities, earn XP, unlock achievements and maintain streaks.",
+    },
+  ];
+
+  const handleGetStarted = () => {
+    setShowAuth(true);
+  };
+
   return (
-    <>
-      {/* =====================================================
-          CINEMATIC INTRO
-      ====================================================== */}
+    <div style={styles.page}>
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+          }
 
-      {!introFinished && (
-        <div style={styles.introScreen}>
-          <div style={styles.introGrid}></div>
+          html {
+            scroll-behavior: smooth;
+          }
 
-          <div
+          body {
+            margin: 0;
+            background: #050708;
+            color: white;
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
+          }
+
+          button {
+            font-family: inherit;
+          }
+
+          ::selection {
+            background: rgba(0, 255, 170, 0.35);
+            color: white;
+          }
+
+          .command-card {
+            transition:
+              transform 0.35s ease,
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+          }
+
+          .command-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(0, 255, 170, 0.42) !important;
+            box-shadow:
+              0 25px 70px rgba(0, 0, 0, 0.45),
+              0 0 35px rgba(0, 255, 170, 0.08);
+          }
+
+          .feature-card {
+            transition:
+              transform 0.35s ease,
+              border-color 0.35s ease,
+              background 0.35s ease;
+          }
+
+          .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 255, 170, 0.38) !important;
+            background: rgba(16, 28, 27, 0.92) !important;
+          }
+
+          .primary-button {
+            transition:
+              transform 0.25s ease,
+              box-shadow 0.25s ease,
+              background 0.25s ease;
+          }
+
+          .primary-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+              0 15px 40px rgba(0, 255, 170, 0.22),
+              0 0 30px rgba(0, 255, 170, 0.12);
+          }
+
+          .nav-button {
+            transition:
+              color 0.2s ease,
+              background 0.2s ease;
+          }
+
+          .nav-button:hover {
+            color: #00ffaa !important;
+            background: rgba(0, 255, 170, 0.06) !important;
+          }
+
+          .pulse-dot {
+            animation: pulseDot 1.8s infinite;
+          }
+
+          @keyframes pulseDot {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(0, 255, 170, 0.45);
+            }
+
+            50% {
+              box-shadow: 0 0 0 8px rgba(0, 255, 170, 0);
+            }
+          }
+
+          .body-float {
+            animation: bodyFloat 4s ease-in-out infinite;
+          }
+
+          @keyframes bodyFloat {
+            0%, 100% {
+              transform: translateY(0);
+            }
+
+            50% {
+              transform: translateY(-12px);
+            }
+          }
+
+          .energy-ring {
+            animation: ringSpin 14s linear infinite;
+          }
+
+          @keyframes ringSpin {
+            from {
+              transform: rotate(0deg);
+            }
+
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          .scan-line {
+            animation: scanMove 2.6s ease-in-out infinite;
+          }
+
+          @keyframes scanMove {
+            0%, 100% {
+              top: 18%;
+              opacity: 0.2;
+            }
+
+            50% {
+              top: 72%;
+              opacity: 1;
+            }
+          }
+
+          .data-pulse {
+            animation: dataPulse 2s ease-in-out infinite;
+          }
+
+          @keyframes dataPulse {
+            0%, 100% {
+              opacity: 0.45;
+            }
+
+            50% {
+              opacity: 1;
+            }
+          }
+
+          .grid-move {
+            animation: gridMove 16s linear infinite;
+          }
+
+          @keyframes gridMove {
+            from {
+              transform: translateY(0);
+            }
+
+            to {
+              transform: translateY(70px);
+            }
+          }
+
+          @media (max-width: 900px) {
+            .hero-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .hero-copy {
+              text-align: center;
+            }
+
+            .hero-actions {
+              justify-content: center !important;
+            }
+
+            .hero-mini-stats {
+              justify-content: center !important;
+            }
+
+            .body-stage {
+              min-height: 560px !important;
+            }
+
+            .feature-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .command-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+          }
+
+          @media (max-width: 600px) {
+            .nav-links {
+              display: none !important;
+            }
+
+            .nav {
+              padding: 16px 18px !important;
+            }
+
+            .hero {
+              padding: 70px 18px 50px !important;
+            }
+
+            .hero-title {
+              font-size: 48px !important;
+              line-height: 0.98 !important;
+            }
+
+            .hero-subtitle {
+              font-size: 16px !important;
+            }
+
+            .body-stage {
+              min-height: 470px !important;
+            }
+
+            .body-head {
+              width: 58px !important;
+              height: 58px !important;
+            }
+
+            .body-torso {
+              width: 110px !important;
+              height: 175px !important;
+            }
+
+            .feature-grid,
+            .command-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .section {
+              padding: 70px 18px !important;
+            }
+
+            .footer {
+              padding: 30px 18px !important;
+            }
+          }
+        `}
+      </style>
+
+      {/* Background */}
+      <div style={styles.backgroundGlowOne} />
+      <div style={styles.backgroundGlowTwo} />
+
+      <div
+        className="grid-move"
+        style={{
+          ...styles.backgroundGrid,
+          transform: `translate(${mouse.x * -12}px, ${mouse.y * -12}px)`,
+        }}
+      />
+
+      {/* NAVBAR */}
+      <nav className="nav" style={styles.nav}>
+        <div style={styles.logoArea}>
+          <div style={styles.logoMark}>
+            <span style={styles.logoPulse} />
+          </div>
+
+          <div>
+            <div style={styles.logoText}>AI FIT TRACK</div>
+            <div style={styles.logoSub}>INTELLIGENT FITNESS OS</div>
+          </div>
+        </div>
+
+        <div className="nav-links" style={styles.navLinks}>
+          <button
+            className="nav-button"
+            style={styles.navButton}
+            onClick={() =>
+              document
+                .getElementById("features")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            Features
+          </button>
+
+          <button
+            className="nav-button"
+            style={styles.navButton}
+            onClick={() =>
+              document
+                .getElementById("system")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            System
+          </button>
+
+          <button
+            className="nav-button"
+            style={styles.navButton}
+            onClick={() =>
+              document
+                .getElementById("ai")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            AI Coach
+          </button>
+        </div>
+
+        <button
+          className="primary-button"
+          style={styles.navCta}
+          onClick={handleGetStarted}
+        >
+          Login / Sign Up →
+        </button>
+      </nav>
+
+      {/* HERO */}
+      <main className="hero" style={styles.hero}>
+        <div className="hero-grid" style={styles.heroGrid}>
+          {/* LEFT */}
+          <section className="hero-copy" style={styles.heroCopy}>
+            <div style={styles.statusPill}>
+              <span className="pulse-dot" style={styles.statusDot} />
+              AI FITNESS SYSTEM ONLINE
+            </div>
+
+            <h1 className="hero-title" style={styles.heroTitle}>
+              YOUR FITNESS.
+              <br />
+              <span style={styles.greenText}>ONE COMMAND CENTER.</span>
+            </h1>
+
+            <p className="hero-subtitle" style={styles.heroSubtitle}>
+              AI-powered fitness tracking, intelligent coaching, 3D body
+              visualization and progress analytics — built into one modern
+              fitness platform.
+            </p>
+
+            <div className="hero-actions" style={styles.heroActions}>
+              <button
+                className="primary-button"
+                style={styles.heroButton}
+                onClick={handleGetStarted}
+              >
+                GET STARTED
+                <span style={styles.buttonArrow}>→</span>
+              </button>
+
+              <button
+                style={styles.secondaryButton}
+                onClick={() =>
+                  document
+                    .getElementById("system")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
+                EXPLORE SYSTEM
+              </button>
+            </div>
+
+            <div className="hero-mini-stats" style={styles.heroMiniStats}>
+              <div>
+                <strong style={styles.miniNumber}>AI</strong>
+                <span style={styles.miniLabel}>COACH</span>
+              </div>
+
+              <div style={styles.miniDivider} />
+
+              <div>
+                <strong style={styles.miniNumber}>3D</strong>
+                <span style={styles.miniLabel}>BODY</span>
+              </div>
+
+              <div style={styles.miniDivider} />
+
+              <div>
+                <strong style={styles.miniNumber}>24/7</strong>
+                <span style={styles.miniLabel}>TRACKING</span>
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT 3D BODY COMMAND CENTER */}
+          <section
+            className="body-stage"
             style={{
-              ...styles.introAurora,
-              left: `${mouse.x}%`,
-              top: `${mouse.y}%`,
+              ...styles.bodyStage,
+              transform: `perspective(1200px) rotateY(${mouse.x * 5}deg) rotateX(${mouse.y * -4}deg)`,
             }}
-          />
+          >
+            <div style={styles.stageHeader}>
+              <span>
+                <span className="pulse-dot" style={styles.statusDotSmall} />
+                BODY ANALYSIS
+              </span>
 
-          {/* PARTICLES */}
-          <div style={styles.introParticles}>
-            {Array.from({ length: 28 }).map((_, index) => (
-              <span
-                key={index}
+              <span style={styles.liveText}>LIVE</span>
+            </div>
+
+            <div className="body-float" style={styles.bodyScene}>
+              {/* Energy rings */}
+              <div
+                className="energy-ring"
                 style={{
-                  ...styles.introParticle,
-                  left: `${(index * 37) % 100}%`,
-                  top: `${(index * 19) % 100}%`,
-                  animationDelay: `${(index % 7) * 0.2}s`,
+                  ...styles.energyRing,
+                  transform: `rotate(${mouse.x * 18}deg)`,
                 }}
               />
-            ))}
-          </div>
 
-          {/* TOP SYSTEM HUD */}
-          <div style={styles.topHud}>
-            <span>AI-FIT-TRACK // CORE-01</span>
-            <span>SECURE SYSTEM</span>
-          </div>
+              <div style={styles.energyRingInner} />
 
-          {/* CORNER HUD */}
-          <div style={styles.cornerTopLeft}></div>
-          <div style={styles.cornerTopRight}></div>
-          <div style={styles.cornerBottomLeft}></div>
-          <div style={styles.cornerBottomRight}></div>
+              {/* Scan line */}
+              <div className="scan-line" style={styles.scanLine} />
 
-          <div style={styles.introCenter}>
-            {/* STATUS */}
-            <div style={styles.bootStatus}>
-              <span style={styles.statusPulse}></span>
+              {/* Body */}
+              <div style={styles.humanBody}>
+                {/* Head */}
+                <div className="body-head" style={styles.bodyHead}>
+                  <div style={styles.faceGlow} />
+                </div>
 
-              {introProgress < 30
-                ? "INITIALIZING AI CORE"
-                : introProgress < 60
-                ? "SCANNING HUMAN MOTION"
-                : introProgress < 85
-                ? "CALIBRATING 3D ENGINE"
-                : "SYSTEM READY"}
-            </div>
+                {/* Neck */}
+                <div style={styles.neck} />
 
-            {/* 3D CORE */}
-            <div style={styles.introCore}>
-              <div style={styles.coreRingOne}></div>
-              <div style={styles.coreRingTwo}></div>
-              <div style={styles.coreRingThree}></div>
+                {/* Torso */}
+                <div className="body-torso" style={styles.bodyTorso}>
+                  <div style={styles.chestLine} />
+                  <div style={styles.abLineOne} />
+                  <div style={styles.abLineTwo} />
+                </div>
 
-              <div style={styles.coreGlow}></div>
+                {/* Left arm */}
+                <div style={styles.leftArm}>
+                  <div style={styles.armGlow} />
+                </div>
 
-              <div style={styles.introBody}>
-                <ThreeDBody />
+                {/* Right arm */}
+                <div style={styles.rightArm}>
+                  <div style={styles.armGlow} />
+                </div>
+
+                {/* Left leg */}
+                <div style={styles.leftLeg}>
+                  <div style={styles.legGlow} />
+                </div>
+
+                {/* Right leg */}
+                <div style={styles.rightLeg}>
+                  <div style={styles.legGlow} />
+                </div>
+
+                {/* Feet */}
+                <div style={styles.leftFoot} />
+                <div style={styles.rightFoot} />
               </div>
 
-              {/* SCAN BEAM */}
+              {/* Data points */}
               <div
+                className="data-pulse"
                 style={{
-                  ...styles.introScanBeam,
-                  top: `${18 + (introProgress / 100) * 64}%`,
+                  ...styles.dataPoint,
+                  top: "22%",
+                  left: "10%",
                 }}
-              ></div>
-
-              {/* DATA POINTS */}
-              <div style={{ ...styles.dataPoint, top: "22%", left: "8%" }}>
-                <span></span>
-                MOTION
+              >
+                <span>01</span>
+                <strong>CORE</strong>
               </div>
 
-              <div style={{ ...styles.dataPoint, top: "42%", right: "4%" }}>
-                <span></span>
-                AI CORE
+              <div
+                className="data-pulse"
+                style={{
+                  ...styles.dataPoint,
+                  top: "39%",
+                  right: "5%",
+                  animationDelay: "0.4s",
+                }}
+              >
+                <span>02</span>
+                <strong>CHEST</strong>
               </div>
 
-              <div style={{ ...styles.dataPoint, bottom: "24%", left: "5%" }}>
-                <span></span>
-                BODY
+              <div
+                className="data-pulse"
+                style={{
+                  top: "57%",
+                  left: "5%",
+                  ...styles.dataPoint,
+                  animationDelay: "0.8s",
+                }}
+              >
+                <span>03</span>
+                <strong>LEGS</strong>
               </div>
 
-              <div style={{ ...styles.dataPoint, bottom: "18%", right: "2%" }}>
-                <span></span>
-                ANALYSIS
-              </div>
-            </div>
-
-            {/* TITLE */}
-            <div
-              style={{
-                ...styles.introBrand,
-                transform: `translateY(${
-                  introProgress >= 65 ? "0px" : "14px"
-                })`,
-                opacity: introProgress >= 45 ? 1 : 0,
-              }}
-            >
-              <div style={styles.introEyebrow}>
-                AI-POWERED 3D FITNESS SYSTEM
-              </div>
-
-              <h1 style={styles.introTitle}>
-                AI <span>FIT</span> TRACK
-              </h1>
-
-              <div style={styles.introLine}>
-                TRAIN SMARTER • LIVE STRONGER
+              <div
+                className="data-pulse"
+                style={{
+                  top: "70%",
+                  right: "4%",
+                  ...styles.dataPoint,
+                  animationDelay: "1.2s",
+                }}
+              >
+                <span>04</span>
+                <strong>FORM</strong>
               </div>
             </div>
 
-            {/* PROGRESS */}
-            <div style={styles.bootProgress}>
-              <div style={styles.bootProgressTop}>
-                <span>
-                  {introProgress < 30
-                    ? "LOADING FITNESS CORE..."
-                    : introProgress < 60
-                    ? "ANALYZING MOTION..."
-                    : introProgress < 85
-                    ? "ACTIVATING EXPERIENCE..."
-                    : "WELCOME TO AI FIT TRACK"}
-                </span>
+            {/* Fitness score */}
+            <div style={styles.scoreCard}>
+              <div style={styles.scoreCircle}>
+                <svg
+                  width="92"
+                  height="92"
+                  viewBox="0 0 100 100"
+                  style={{ transform: "rotate(-90deg)" }}
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="42"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="7"
+                  />
 
-                <strong>{introProgress}%</strong>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="42"
+                    fill="none"
+                    stroke="#00ffaa"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray="264"
+                    strokeDashoffset={264 - (264 * score) / 100}
+                  />
+                </svg>
+
+                <div style={styles.scoreNumber}>{score}</div>
               </div>
 
-              <div style={styles.bootTrack}>
+              <div>
+                <div style={styles.scoreTitle}>AI FITNESS SCORE</div>
+
+                <div style={styles.scoreStatus}>
+                  <span style={styles.scoreStatusDot} />
+                  SYSTEM OPTIMIZING
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* COMMAND STATS */}
+        <section className="command-grid" style={styles.commandGrid}>
+          <div className="command-card" style={styles.commandCard}>
+            <div style={styles.commandIcon}>🔥</div>
+
+            <div>
+              <div style={styles.commandLabel}>TODAY'S STEPS</div>
+
+              <div style={styles.commandValue}>
+                {steps.toLocaleString()}
+              </div>
+
+              <div style={styles.commandProgress}>
                 <div
                   style={{
-                    ...styles.bootFill,
-                    width: `${introProgress}%`,
+                    ...styles.commandProgressFill,
+                    width: `${Math.min((steps / 10000) * 100, 100)}%`,
                   }}
                 />
               </div>
             </div>
 
-            <button style={styles.skipIntro} onClick={skipIntro}>
-              SKIP INTRO →
-            </button>
+            <span style={styles.commandTarget}>10K</span>
+          </div>
+
+          <div className="command-card" style={styles.commandCard}>
+            <div style={styles.commandIcon}>💧</div>
+
+            <div>
+              <div style={styles.commandLabel}>HYDRATION</div>
+
+              <div style={styles.commandValue}>
+                {water}
+                <span style={styles.unit}> L</span>
+              </div>
+
+              <div style={styles.commandProgress}>
+                <div
+                  style={{
+                    ...styles.commandProgressFill,
+                    width: `${Math.min((water / 2.5) * 100, 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <span style={styles.commandTarget}>2.5L</span>
+          </div>
+
+          <div className="command-card" style={styles.commandCard}>
+            <div style={styles.commandIcon}>🏋️</div>
+
+            <div>
+              <div style={styles.commandLabel}>WORKOUTS</div>
+
+              <div style={styles.commandValue}>
+                {workouts}
+                <span style={styles.unit}> sessions</span>
+              </div>
+
+              <div style={styles.commandProgress}>
+                <div
+                  style={{
+                    ...styles.commandProgressFill,
+                    width: `${Math.min((workouts / 4) * 100, 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <span style={styles.commandTarget}>4</span>
+          </div>
+
+          <div className="command-card" style={styles.commandCard}>
+            <div style={styles.commandIcon}>⚡</div>
+
+            <div>
+              <div style={styles.commandLabel}>DAILY GOAL</div>
+
+              <div style={styles.commandValue}>82%</div>
+
+              <div style={styles.commandProgress}>
+                <div
+                  style={{
+                    ...styles.commandProgressFill,
+                    width: "82%",
+                  }}
+                />
+              </div>
+            </div>
+
+            <span style={styles.commandTarget}>READY</span>
+          </div>
+        </section>
+      </main>
+
+      {/* SYSTEM SECTION */}
+      <section id="system" className="section" style={styles.section}>
+        <div style={styles.sectionHeader}>
+          <div style={styles.sectionEyebrow}>01 / FITNESS SYSTEM</div>
+
+          <h2 style={styles.sectionTitle}>
+            Everything you need.
+            <br />
+            <span style={styles.greenText}>One intelligent platform.</span>
+          </h2>
+
+          <p style={styles.sectionDescription}>
+            AI Fit Track combines fitness tracking, artificial intelligence,
+            interactive 3D visualization and gamification into one connected
+            experience.
+          </p>
+        </div>
+
+        <div style={styles.systemPanel}>
+          <div style={styles.systemVisual}>
+            <div style={styles.systemOrb}>
+              <div style={styles.systemOrbInner}>AI</div>
+            </div>
+
+            <div style={styles.orbitOne} />
+            <div style={styles.orbitTwo} />
+            <div style={styles.orbitThree} />
+          </div>
+
+          <div style={styles.systemInfo}>
+            <div style={styles.systemItem}>
+              <span>01</span>
+
+              <div>
+                <strong>TRACK</strong>
+                <p>
+                  Monitor your daily movement, water, workouts and progress.
+                </p>
+              </div>
+            </div>
+
+            <div style={styles.systemItem}>
+              <span>02</span>
+
+              <div>
+                <strong>ANALYZE</strong>
+                <p>
+                  Turn your fitness data into personalized AI insights.
+                </p>
+              </div>
+            </div>
+
+            <div style={styles.systemItem}>
+              <span>03</span>
+
+              <div>
+                <strong>IMPROVE</strong>
+                <p>
+                  Follow personalized workouts and continuously improve your
+                  fitness routine.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* =====================================================
-          MAIN WEBSITE
-      ====================================================== */}
+      {/* FEATURES */}
+      <section id="features" className="section" style={styles.section}>
+        <div style={styles.sectionHeader}>
+          <div style={styles.sectionEyebrow}>02 / CORE FEATURES</div>
 
-      <div
-        style={{
-          ...styles.page,
-          opacity: introFinished ? 1 : 0,
-          transform: introFinished
-            ? "scale(1) translateY(0)"
-            : "scale(1.035) translateY(15px)",
-          pointerEvents: introFinished ? "auto" : "none",
-        }}
-      >
-        {/* NAVBAR */}
-        <nav style={styles.navbar}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>⚡</span>
-            <span>AI Fit Track</span>
-          </div>
+          <h2 style={styles.sectionTitle}>
+            Built like a
+            <br />
+            <span style={styles.greenText}>real fitness product.</span>
+          </h2>
+        </div>
 
-          <div style={styles.navLinks}>
-            <button onClick={() => scrollTo("features")}>
-              Features
-            </button>
-
-            <button onClick={() => scrollTo("ai")}>
-              AI Coach
-            </button>
-
-            <button onClick={() => scrollTo("progress")}>
-              Progress
-            </button>
-
-            <button
-              style={styles.loginButton}
-              onClick={() => setShowAuth(true)}
+        <div className="feature-grid" style={styles.featureGrid}>
+          {features.map((feature, index) => (
+            <div
+              key={feature.title}
+              className="feature-card"
+              style={{
+                ...styles.featureCard,
+                ...(activeFeature === index ? styles.featureActive : {}),
+              }}
+              onMouseEnter={() => setActiveFeature(index)}
+              onMouseLeave={() => setActiveFeature(null)}
             >
-              Login
-            </button>
-          </div>
-        </nav>
+              <div style={styles.featureTop}>
+                <span style={styles.featureNumber}>
+                  0{index + 1}
+                </span>
 
-        <main>
-          {/* =================================================
-              HERO
-          ================================================== */}
-
-          <section style={styles.hero}>
-            <div style={styles.heroContent}>
-              <div style={styles.badge}>
-                <span style={styles.badgeDot}></span>
-                AI POWERED FITNESS PLATFORM
+                <span style={styles.featureIcon}>{feature.icon}</span>
               </div>
 
-              <h1 style={styles.title}>
-                Train Smarter.
-                <br />
-                <span style={styles.gradient}>
-                  Live Stronger.
-                </span>
-              </h1>
+              <h3 style={styles.featureTitle}>{feature.title}</h3>
 
-              <p style={styles.description}>
-                A next-generation fitness platform combining AI,
-                interactive 3D visualization, smart workouts,
-                progress analytics and personalized coaching.
+              <p style={styles.featureDescription}>
+                {feature.description}
               </p>
 
-              <div style={styles.buttons}>
-                <button
-                  style={styles.primaryButton}
-                  onClick={() => setShowAuth(true)}
-                >
-                  Start Your Journey
-                  <span>→</span>
-                </button>
-
-                <button
-                  style={styles.secondaryButton}
-                  onClick={() => scrollTo("features")}
-                >
-                  Explore Platform
-                </button>
+              <div style={styles.featureLine}>
+                <span />
               </div>
 
-              <div style={styles.trust}>
-                <div>
-                  <strong>AI</strong>
-                  <span>Powered</span>
-                </div>
-
-                <div>
-                  <strong>3D</strong>
-                  <span>Interactive</span>
-                </div>
-
-                <div>
-                  <strong>24/7</strong>
-                  <span>AI Coach</span>
-                </div>
-              </div>
+              <div style={styles.featureArrow}>↗</div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            {/* HERO 3D */}
-            <div style={styles.heroVisual}>
-              <div style={styles.heroGlow}></div>
+      {/* AI SECTION */}
+      <section id="ai" className="section" style={styles.aiSection}>
+        <div style={styles.aiGlow} />
 
-              <div style={styles.heroOrbit}></div>
-              <div style={styles.heroOrbitSmall}></div>
+        <div style={styles.aiGrid}>
+          <div>
+            <div style={styles.sectionEyebrow}>03 / ARTIFICIAL INTELLIGENCE</div>
 
-              <div style={styles.heroCard}>
-                <div style={styles.heroCardHeader}>
-                  <span>AI BODY ANALYSIS</span>
-
-                  <span style={styles.live}>
-                    <i></i>
-                    LIVE
-                  </span>
-                </div>
-
-                <div style={styles.heroBody}>
-                  <ThreeDBody />
-
-                  <div style={styles.floatScore}>
-                    <small>AI FITNESS SCORE</small>
-                    <strong>92</strong>
-                    <span>EXCELLENT</span>
-                  </div>
-
-                  <div style={styles.floatStatus}>
-                    <small>BODY STATUS</small>
-                    <strong>OPTIMAL</strong>
-                    <span>● AI ANALYZED</span>
-                  </div>
-
-                  <div style={styles.floatEnergy}>
-                    <small>ENERGY</small>
-                    <strong>84%</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* MARQUEE */}
-          <div style={styles.marquee}>
-            <div style={styles.marqueeTrack}>
-              {[
-                "AI FITNESS",
-                "3D BODY",
-                "SMART WORKOUTS",
-                "AI COACH",
-                "PROGRESS",
-                "GAMIFICATION",
-                "AI FITNESS",
-                "3D BODY",
-                "SMART WORKOUTS",
-                "AI COACH",
-                "PROGRESS",
-                "GAMIFICATION",
-              ].map((item, index) => (
-                <span key={index}>
-                  {item}
-                  <b>✦</b>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* =================================================
-              FEATURES
-          ================================================== */}
-
-          <section
-            id="features"
-            ref={(el) => (sectionRefs.current[0] = el)}
-            style={{
-              ...styles.section,
-              ...getRevealStyle(visibleSections[0]),
-            }}
-          >
-            <div style={styles.sectionHeader}>
-              <span style={styles.sectionLabel}>
-                THE AI FIT SYSTEM
-              </span>
-
-              <h2 style={styles.sectionTitle}>
-                Everything you need
-                <br />
-                <span style={styles.gradient}>
-                  to level up.
-                </span>
-              </h2>
-
-              <p style={styles.sectionDescription}>
-                One intelligent platform for your complete fitness journey.
-              </p>
-            </div>
-
-            <div style={styles.featureGrid}>
-              <Feature
-                icon="🤖"
-                number="01"
-                title="AI Fitness Coach"
-                text="Personalized fitness guidance based on your goals and activity."
-              />
-
-              <Feature
-                icon="🏋️"
-                number="02"
-                title="Smart Workouts"
-                text="Track exercises, sets, reps, timers and workout performance."
-              />
-
-              <Feature
-                icon="🧍"
-                number="03"
-                title="Interactive 3D Body"
-                text="Explore your body through an interactive 3D visualization."
-              />
-
-              <Feature
-                icon="📊"
-                number="04"
-                title="Progress Analytics"
-                text="Understand your fitness journey using charts and history."
-              />
-
-              <Feature
-                icon="🧠"
-                number="05"
-                title="AI Insights"
-                text="Convert your fitness data into useful recommendations."
-              />
-
-              <Feature
-                icon="🏆"
-                number="06"
-                title="Gamification"
-                text="Earn XP, maintain streaks and unlock achievements."
-              />
-            </div>
-          </section>
-
-          {/* =================================================
-              AI SECTION
-          ================================================== */}
-
-          <section
-            id="ai"
-            ref={(el) => (sectionRefs.current[1] = el)}
-            style={{
-              ...styles.aiSection,
-              ...getRevealStyle(visibleSections[1]),
-            }}
-          >
-            <div style={styles.aiGlow}></div>
-
-            <div style={styles.aiCard}>
-              <div style={styles.aiVisual}>
-                <div style={styles.aiRingOne}></div>
-                <div style={styles.aiRingTwo}></div>
-
-                <div style={styles.aiCore}>
-                  <span>AI</span>
-                </div>
-              </div>
-
-              <div style={styles.aiContent}>
-                <span style={styles.sectionLabel}>
-                  YOUR PERSONAL AI
-                </span>
-
-                <h2 style={styles.aiTitle}>
-                  Meet your
-                  <br />
-                  <span style={styles.gradient}>
-                    AI Fitness Coach.
-                  </span>
-                </h2>
-
-                <p style={styles.aiText}>
-                  Ask about workouts, steps, water, BMI, weight
-                  management and fitness goals. Your AI Coach connects
-                  with your fitness system.
-                </p>
-
-                <button
-                  style={styles.primaryButton}
-                  onClick={() => setShowAuth(true)}
-                >
-                  Enter AI Coach
-                  <span>→</span>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* =================================================
-              PROGRESS
-          ================================================== */}
-
-          <section
-            id="progress"
-            ref={(el) => (sectionRefs.current[2] = el)}
-            style={{
-              ...styles.section,
-              ...getRevealStyle(visibleSections[2]),
-            }}
-          >
-            <div style={styles.sectionHeader}>
-              <span style={styles.sectionLabel}>
-                SMART ANALYTICS
-              </span>
-
-              <h2 style={styles.sectionTitle}>
-                Progress that
-                <br />
-                <span style={styles.gradient}>
-                  motivates you.
-                </span>
-              </h2>
-            </div>
-
-            <div style={styles.progressDashboard}>
-              <div style={styles.progressTop}>
-                <div>
-                  <span style={styles.mutedLabel}>
-                    WEEKLY ACTIVITY
-                  </span>
-
-                  <h3 style={styles.progressTitle}>
-                    Your fitness momentum
-                  </h3>
-                </div>
-
-                <div style={styles.scoreCircle}>
-                  <strong>86</strong>
-                  <span>SCORE</span>
-                </div>
-              </div>
-
-              <div style={styles.chart}>
-                <ChartBar day="MON" height="42%" />
-                <ChartBar day="TUE" height="58%" />
-                <ChartBar day="WED" height="50%" />
-                <ChartBar day="THU" height="72%" />
-                <ChartBar day="FRI" height="64%" />
-                <ChartBar day="SAT" height="92%" />
-                <ChartBar day="SUN" height="78%" />
-              </div>
-
-              <div style={styles.analytics}>
-                <div>
-                  <span>🔥 Calories</span>
-                  <strong>642</strong>
-                </div>
-
-                <div>
-                  <span>👟 Steps</span>
-                  <strong>8,426</strong>
-                </div>
-
-                <div>
-                  <span>💧 Water</span>
-                  <strong>1.8L</strong>
-                </div>
-
-                <div>
-                  <span>⚡ Streak</span>
-                  <strong>12 Days</strong>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* =================================================
-              TECHNOLOGY
-          ================================================== */}
-
-          <section
-            ref={(el) => (sectionRefs.current[3] = el)}
-            style={{
-              ...styles.techSection,
-              ...getRevealStyle(visibleSections[3]),
-            }}
-          >
-            <span style={styles.sectionLabel}>
-              BUILT FOR THE FUTURE
-            </span>
-
-            <h2 style={styles.techTitle}>
-              AI + 3D + Analytics
+            <h2 style={styles.aiTitle}>
+              Your data.
               <br />
-              <span style={styles.gradient}>
-                in one experience.
-              </span>
+              <span style={styles.greenText}>Your AI coach.</span>
             </h2>
 
-            <div style={styles.techGrid}>
-              <Tech icon="⚡" text="AI ENGINE" />
-              <Tech icon="🧍" text="3D VISUALIZATION" />
-              <Tech icon="📈" text="SMART ANALYTICS" />
-              <Tech icon="🏆" text="GAMIFICATION" />
-            </div>
-          </section>
-
-          {/* =================================================
-              FINAL CTA
-          ================================================== */}
-
-          <section
-            ref={(el) => (sectionRefs.current[4] = el)}
-            style={{
-              ...styles.finalSection,
-              ...getRevealStyle(visibleSections[4]),
-            }}
-          >
-            <div style={styles.finalGlow}></div>
-
-            <span style={styles.sectionLabel}>
-              READY TO START?
-            </span>
-
-            <h2 style={styles.finalTitle}>
-              Your stronger version
-              <br />
-              <span style={styles.gradient}>
-                starts today.
-              </span>
-            </h2>
-
-            <p style={styles.finalText}>
-              Build consistency. Track progress. Train smarter with AI.
+            <p style={styles.aiDescription}>
+              AI Fit Track transforms your fitness information into useful
+              recommendations, insights and personalized workout guidance.
             </p>
 
-            <button
-              style={styles.finalButton}
-              onClick={() => setShowAuth(true)}
-            >
-              Enter AI Fit Track
-              <span>→</span>
-            </button>
-          </section>
-        </main>
+            <div style={styles.aiFeatures}>
+              <div style={styles.aiFeature}>
+                <span>✓</span>
+                Personalized fitness analysis
+              </div>
 
-        {/* FOOTER */}
-        <footer style={styles.footer}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>⚡</span>
-            AI Fit Track
+              <div style={styles.aiFeature}>
+                <span>✓</span>
+                Goal-based recommendations
+              </div>
+
+              <div style={styles.aiFeature}>
+                <span>✓</span>
+                AI workout planning
+              </div>
+
+              <div style={styles.aiFeature}>
+                <span>✓</span>
+                Interactive AI Coach
+              </div>
+            </div>
           </div>
 
-          <span style={styles.footerText}>
-            AI-Powered 3D Fitness & Wellness Platform • © 2026
-          </span>
-        </footer>
-      </div>
-    </>
-  );
-}
+          <div style={styles.aiTerminal}>
+            <div style={styles.terminalHeader}>
+              <div style={styles.terminalDots}>
+                <span />
+                <span />
+                <span />
+              </div>
 
-/* =========================================================
-   HELPERS
-========================================================= */
+              <span>AI_FIT_ENGINE</span>
 
-function getRevealStyle(visible) {
-  return {
-    opacity: visible ? 1 : 0,
-    transform: visible
-      ? "translateY(0) scale(1)"
-      : "translateY(55px) scale(.97)",
-    transition:
-      "opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1)",
-  };
-}
+              <span style={styles.terminalLive}>ONLINE</span>
+            </div>
 
-function Feature({ icon, number, title, text }) {
-  return (
-    <div style={styles.featureCard}>
-      <div style={styles.featureTop}>
-        <div style={styles.featureIcon}>{icon}</div>
-        <span style={styles.featureNumber}>{number}</span>
-      </div>
+            <div style={styles.terminalBody}>
+              <div style={styles.terminalLine}>
+                <span style={styles.terminalGreen}>$</span>{" "}
+                analyzing_fitness_data()
+              </div>
 
-      <h3>{title}</h3>
+              <div style={styles.terminalLine}>
+                <span style={styles.terminalGreen}>$</span>{" "}
+                calculating_fitness_score...
+              </div>
 
-      <p>{text}</p>
+              <div style={styles.terminalResult}>
+                FITNESS SCORE
+                <strong>{score}/100</strong>
+              </div>
 
-      <div style={styles.featureArrow}>↗</div>
+              <div style={styles.terminalLine}>
+                <span style={styles.terminalGreen}>$</span>{" "}
+                generating_recommendation...
+              </div>
+
+              <div style={styles.aiRecommendation}>
+                <span>AI</span>
+                Increase daily movement gradually and maintain consistent
+                hydration and workout recovery.
+              </div>
+
+              <div style={styles.terminalCursor}>_</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="section" style={styles.ctaSection}>
+        <div style={styles.ctaBox}>
+          <div style={styles.ctaGlow} />
+
+          <div style={styles.sectionEyebrow}>04 / START YOUR JOURNEY</div>
+
+          <h2 style={styles.ctaTitle}>
+            READY TO
+            <br />
+            <span style={styles.greenText}>LEVEL UP?</span>
+          </h2>
+
+          <p style={styles.ctaDescription}>
+            Build better habits. Track your progress. Let AI help you move
+            forward.
+          </p>
+
+          <button
+            className="primary-button"
+            style={styles.ctaButton}
+            onClick={handleGetStarted}
+          >
+            ENTER AI FIT TRACK
+            <span>→</span>
+          </button>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer" style={styles.footer}>
+        <div style={styles.footerLogo}>AI FIT TRACK</div>
+
+        <div style={styles.footerText}>
+          AI-Powered 3D Fitness & Wellness Platform
+        </div>
+
+        <div style={styles.footerBottom}>
+          <span>© 2026 AI Fit Track</span>
+          <span>BUILT FOR THE FUTURE OF FITNESS</span>
+        </div>
+      </footer>
     </div>
   );
 }
-
-function ChartBar({ day, height }) {
-  return (
-    <div style={styles.chartColumn}>
-      <div style={styles.chartBarArea}>
-        <div
-          style={{
-            ...styles.chartBar,
-            height,
-          }}
-        ></div>
-      </div>
-
-      <span>{day}</span>
-    </div>
-  );
-}
-
-function Tech({ icon, text }) {
-  return (
-    <div style={styles.techItem}>
-      <span>{icon}</span>
-      {text}
-    </div>
-  );
-}
-
-/* =========================================================
-   STYLES
-========================================================= */
 
 const styles = {
-  /* ================= INTRO ================= */
+  page: {
+    minHeight: "100vh",
+    background: "#050708",
+    color: "#ffffff",
+    position: "relative",
+    overflow: "hidden",
+  },
 
-  introScreen: {
+  backgroundGlowOne: {
+    position: "fixed",
+    width: "600px",
+    height: "600px",
+    borderRadius: "50%",
+    background: "rgba(0, 255, 170, 0.07)",
+    filter: "blur(100px)",
+    top: "-250px",
+    right: "-180px",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+
+  backgroundGlowTwo: {
+    position: "fixed",
+    width: "500px",
+    height: "500px",
+    borderRadius: "50%",
+    background: "rgba(0, 180, 255, 0.05)",
+    filter: "blur(120px)",
+    bottom: "-250px",
+    left: "-200px",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+
+  backgroundGrid: {
     position: "fixed",
     inset: 0,
-    zIndex: 9999,
+    backgroundImage:
+      "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+    backgroundSize: "70px 70px",
+    maskImage:
+      "linear-gradient(to bottom, black 0%, transparent 80%)",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+
+  nav: {
+    position: "relative",
+    zIndex: 10,
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "22px 34px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "20px",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    backdropFilter: "blur(18px)",
+  },
+
+  logoArea: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+
+  logoMark: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "10px",
     background:
-      "radial-gradient(circle at center, #102c48 0%, #050a14 45%, #01030a 100%)",
-    color: "#fff",
-    overflow: "hidden",
+      "linear-gradient(135deg, #00ffaa, #00bfff)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: "0 0 25px rgba(0,255,170,0.25)",
   },
 
-  introGrid: {
-    position: "absolute",
-    inset: 0,
-    opacity: 0.14,
-    backgroundImage:
-      "linear-gradient(rgba(0,217,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(0,217,255,.14) 1px, transparent 1px)",
-    backgroundSize: "48px 48px",
-    maskImage: "radial-gradient(circle, black, transparent 75%)",
-  },
-
-  introAurora: {
-    position: "absolute",
-    width: "550px",
-    height: "550px",
+  logoPulse: {
+    width: "10px",
+    height: "10px",
     borderRadius: "50%",
-    background:
-      "radial-gradient(circle, rgba(0,217,255,.16), rgba(117,87,255,.08), transparent 70%)",
-    filter: "blur(35px)",
-    transform: "translate(-50%, -50%)",
-    transition: "left .5s ease, top .5s ease",
+    background: "#04110d",
   },
 
-  introParticles: {
-    position: "absolute",
-    inset: 0,
-  },
-
-  introParticle: {
-    position: "absolute",
-    width: "3px",
-    height: "3px",
-    borderRadius: "50%",
-    background: "#5cecff",
-    boxShadow: "0 0 12px #5cecff",
-    animation: "fitParticle 2.4s ease-in-out infinite",
-  },
-
-  topHud: {
-    position: "absolute",
-    top: "22px",
-    left: "28px",
-    right: "28px",
-    display: "flex",
-    justifyContent: "space-between",
-    color: "#4e6884",
-    fontSize: "8px",
-    letterSpacing: "2px",
-    fontWeight: 800,
-  },
-
-  cornerTopLeft: {
-    position: "absolute",
-    top: "65px",
-    left: "30px",
-    width: "55px",
-    height: "55px",
-    borderTop: "1px solid rgba(0,217,255,.35)",
-    borderLeft: "1px solid rgba(0,217,255,.35)",
-  },
-
-  cornerTopRight: {
-    position: "absolute",
-    top: "65px",
-    right: "30px",
-    width: "55px",
-    height: "55px",
-    borderTop: "1px solid rgba(0,217,255,.35)",
-    borderRight: "1px solid rgba(0,217,255,.35)",
-  },
-
-  cornerBottomLeft: {
-    position: "absolute",
-    bottom: "30px",
-    left: "30px",
-    width: "55px",
-    height: "55px",
-    borderBottom: "1px solid rgba(117,87,255,.35)",
-    borderLeft: "1px solid rgba(117,87,255,.35)",
-  },
-
-  cornerBottomRight: {
-    position: "absolute",
-    bottom: "30px",
-    right: "30px",
-    width: "55px",
-    height: "55px",
-    borderBottom: "1px solid rgba(117,87,255,.35)",
-    borderRight: "1px solid rgba(117,87,255,.35)",
-  },
-
-  introCenter: {
-    width: "min(900px, 95vw)",
-    textAlign: "center",
-    position: "relative",
-    zIndex: 5,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-
-  bootStatus: {
-    fontSize: "9px",
-    letterSpacing: "2.5px",
-    color: "#8feeff",
-    fontWeight: 800,
-    marginBottom: "-2px",
-  },
-
-  statusPulse: {
-    display: "inline-block",
-    width: "7px",
-    height: "7px",
-    borderRadius: "50%",
-    background: "#34e6a4",
-    boxShadow: "0 0 14px #34e6a4",
-    marginRight: "8px",
-  },
-
-  introCore: {
-    width: "min(470px, 92vw)",
-    height: "360px",
-    position: "relative",
-    display: "grid",
-    placeItems: "center",
-  },
-
-  coreRingOne: {
-    position: "absolute",
-    width: "275px",
-    height: "275px",
-    borderRadius: "50%",
-    border: "1px solid rgba(0,217,255,.25)",
-    animation: "ringRotate 8s linear infinite",
-  },
-
-  coreRingTwo: {
-    position: "absolute",
-    width: "330px",
-    height: "330px",
-    borderRadius: "50%",
-    border: "1px dashed rgba(139,92,246,.35)",
-    animation: "ringReverse 10s linear infinite",
-  },
-
-  coreRingThree: {
-    position: "absolute",
-    width: "220px",
-    height: "220px",
-    borderRadius: "50%",
-    border: "1px solid rgba(0,217,255,.12)",
-    boxShadow: "0 0 70px rgba(0,217,255,.08)",
-  },
-
-  coreGlow: {
-    position: "absolute",
-    width: "240px",
-    height: "240px",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle, rgba(0,217,255,.15), transparent 68%)",
-    filter: "blur(15px)",
-    animation: "coreGlow 2s ease-in-out infinite",
-  },
-
-  introBody: {
-    position: "absolute",
-    width: "290px",
-    height: "290px",
-    overflow: "hidden",
-    borderRadius: "50%",
-    transform: "scale(.68)",
-    pointerEvents: "none",
-    zIndex: 5,
-  },
-
-  introScanBeam: {
-    position: "absolute",
-    left: "18%",
-    width: "64%",
-    height: "2px",
-    background:
-      "linear-gradient(90deg, transparent, #00f0ff, #fff, #00f0ff, transparent)",
-    boxShadow: "0 0 22px #00e5ff",
-    transition: "top .06s linear",
-    zIndex: 20,
-  },
-
-  dataPoint: {
-    position: "absolute",
-    padding: "5px 9px",
-    border: "1px solid rgba(0,217,255,.28)",
-    background: "rgba(2,14,26,.72)",
-    color: "#7edff0",
-    fontSize: "7px",
-    letterSpacing: "1.5px",
-    zIndex: 30,
-  },
-
-  introBrand: {
-    marginTop: "-15px",
-    transition: "opacity .4s ease, transform .4s ease",
-  },
-
-  introEyebrow: {
-    fontSize: "8px",
-    letterSpacing: "4px",
-    color: "#637995",
-    marginBottom: "7px",
-  },
-
-  introTitle: {
-    margin: 0,
-    fontSize: "clamp(40px, 7vw, 72px)",
-    lineHeight: 1,
-    letterSpacing: "-4px",
+  logoText: {
+    fontSize: "14px",
     fontWeight: 900,
-    textShadow: "0 0 45px rgba(0,217,255,.2)",
+    letterSpacing: "2px",
   },
 
-  introLine: {
-    marginTop: "8px",
-    fontSize: "8px",
-    letterSpacing: "2.5px",
-    color: "#60718b",
-  },
-
-  bootProgress: {
-    width: "min(400px, 80vw)",
-    marginTop: "17px",
-  },
-
-  bootProgressTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    color: "#61748f",
-    fontSize: "8px",
-    letterSpacing: "1px",
-    marginBottom: "6px",
-  },
-
-  bootTrack: {
-    height: "3px",
-    background: "rgba(255,255,255,.07)",
-    borderRadius: "10px",
-    overflow: "hidden",
-  },
-
-  bootFill: {
-    height: "100%",
-    borderRadius: "10px",
-    background: "linear-gradient(90deg,#7557ff,#00e5ff)",
-    boxShadow: "0 0 18px #00e5ff",
-    transition: "width .06s linear",
-  },
-
-  skipIntro: {
-    marginTop: "11px",
-    border: "1px solid rgba(255,255,255,.1)",
-    background: "rgba(255,255,255,.035)",
-    color: "#65748b",
-    borderRadius: "20px",
-    padding: "7px 13px",
+  logoSub: {
+    marginTop: "3px",
     fontSize: "8px",
     letterSpacing: "1.5px",
-    cursor: "pointer",
-  },
-
-  /* ================= PAGE ================= */
-
-  page: {
-    minHeight: "100vh",
-    background:
-      "radial-gradient(circle at 80% 5%, rgba(102,70,255,.16), transparent 25%), radial-gradient(circle at 10% 30%, rgba(0,217,255,.055), transparent 25%), #040711",
-    color: "#fff",
-    fontFamily: "Inter, Arial, sans-serif",
-    overflowX: "hidden",
-    transition:
-      "opacity .65s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)",
-  },
-
-  navbar: {
-    height: "76px",
-    padding: "0 7%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottom: "1px solid rgba(255,255,255,.06)",
-    background: "rgba(4,7,17,.78)",
-    backdropFilter: "blur(18px)",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    fontWeight: 800,
-    fontSize: "20px",
-  },
-
-  logoIcon: {
-    width: "37px",
-    height: "37px",
-    display: "grid",
-    placeItems: "center",
-    borderRadius: "11px",
-    background: "linear-gradient(135deg,#7557ff,#00d9ff)",
-    boxShadow: "0 0 25px rgba(0,217,255,.18)",
+    color: "#66736f",
   },
 
   navLinks: {
     display: "flex",
     alignItems: "center",
-    gap: "22px",
+    gap: "6px",
   },
 
-  loginButton: {
-    padding: "9px 18px",
+  navButton: {
+    background: "transparent",
+    border: "none",
+    color: "#8d9995",
+    padding: "10px 15px",
     borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,.14)",
-    background: "rgba(255,255,255,.05)",
-    color: "#fff",
     cursor: "pointer",
+    fontSize: "12px",
     fontWeight: 700,
+    letterSpacing: "0.5px",
+  },
+
+  navCta: {
+    border: "1px solid rgba(0,255,170,0.35)",
+    background: "rgba(0,255,170,0.08)",
+    color: "#00ffaa",
+    padding: "11px 17px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: 800,
+    letterSpacing: "0.6px",
+    cursor: "pointer",
   },
 
   hero: {
-    minHeight: "700px",
-    padding: "80px 7%",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    alignItems: "center",
-    gap: "50px",
     position: "relative",
+    zIndex: 1,
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "90px 34px 60px",
   },
 
-  heroContent: {
-    maxWidth: "650px",
+  heroGrid: {
+    display: "grid",
+    gridTemplateColumns: "0.95fr 1.05fr",
+    gap: "50px",
+    alignItems: "center",
   },
 
-  badge: {
+  heroCopy: {
+    position: "relative",
+    zIndex: 2,
+  },
+
+  statusPill: {
     display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
-    padding: "9px 14px",
-    borderRadius: "30px",
-    background: "rgba(117,87,255,.1)",
-    border: "1px solid rgba(117,87,255,.2)",
-    color: "#a999ff",
+    gap: "9px",
+    border: "1px solid rgba(0,255,170,0.18)",
+    background: "rgba(0,255,170,0.045)",
+    color: "#83b9aa",
+    borderRadius: "100px",
+    padding: "9px 13px",
     fontSize: "10px",
     fontWeight: 800,
-    letterSpacing: "1px",
-    marginBottom: "23px",
+    letterSpacing: "1.4px",
+    marginBottom: "28px",
   },
 
-  badgeDot: {
-    width: "6px",
-    height: "6px",
+  statusDot: {
+    width: "7px",
+    height: "7px",
     borderRadius: "50%",
-    background: "#00e5ff",
-    boxShadow: "0 0 10px #00e5ff",
+    background: "#00ffaa",
+    display: "inline-block",
   },
 
-  title: {
-    fontSize: "clamp(50px, 6vw, 82px)",
-    lineHeight: 1,
+  heroTitle: {
+    fontSize: "76px",
+    lineHeight: "0.98",
     letterSpacing: "-4px",
-    margin: "0 0 25px",
-    fontWeight: 900,
+    margin: 0,
+    fontWeight: 950,
   },
 
-  gradient: {
-    background: "linear-gradient(90deg,#8c6cff,#00d9ff)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+  greenText: {
+    color: "#00ffaa",
   },
 
-  description: {
-    color: "#929db7",
+  heroSubtitle: {
+    maxWidth: "650px",
+    color: "#889490",
     fontSize: "17px",
-    lineHeight: 1.8,
-    maxWidth: "590px",
+    lineHeight: 1.7,
+    marginTop: "28px",
   },
 
-  buttons: {
+  heroActions: {
     display: "flex",
-    flexWrap: "wrap",
+    alignItems: "center",
     gap: "13px",
-    marginTop: "30px",
+    marginTop: "34px",
   },
 
-  primaryButton: {
-    padding: "14px 22px",
+  heroButton: {
     border: "none",
+    background: "#00ffaa",
+    color: "#03100c",
+    padding: "16px 22px",
     borderRadius: "12px",
-    background: "linear-gradient(135deg,#7557ff,#00cfe8)",
-    color: "#fff",
-    fontWeight: 800,
+    fontSize: "12px",
+    fontWeight: 900,
+    letterSpacing: "0.7px",
     cursor: "pointer",
-    boxShadow: "0 10px 35px rgba(0,207,232,.13)",
+  },
+
+  buttonArrow: {
+    marginLeft: "14px",
+    fontSize: "17px",
   },
 
   secondaryButton: {
-    padding: "14px 22px",
-    border: "1px solid rgba(255,255,255,.12)",
+    border: "1px solid rgba(255,255,255,0.11)",
+    background: "rgba(255,255,255,0.035)",
+    color: "#dce5e1",
+    padding: "15px 20px",
     borderRadius: "12px",
-    background: "rgba(255,255,255,.04)",
-    color: "#fff",
+    fontSize: "11px",
+    fontWeight: 800,
+    letterSpacing: "0.6px",
     cursor: "pointer",
   },
 
-  trust: {
-    display: "flex",
-    gap: "38px",
-    marginTop: "40px",
-  },
-
-  heroVisual: {
-    minHeight: "540px",
-    display: "grid",
-    placeItems: "center",
-    position: "relative",
-  },
-
-  heroGlow: {
-    position: "absolute",
-    width: "400px",
-    height: "400px",
-    borderRadius: "50%",
-    background: "rgba(87,75,255,.27)",
-    filter: "blur(120px)",
-  },
-
-  heroOrbit: {
-    position: "absolute",
-    width: "480px",
-    height: "480px",
-    borderRadius: "50%",
-    border: "1px solid rgba(0,217,255,.09)",
-    animation: "ringRotate 12s linear infinite",
-  },
-
-  heroOrbitSmall: {
-    position: "absolute",
-    width: "390px",
-    height: "390px",
-    borderRadius: "50%",
-    border: "1px dashed rgba(139,92,246,.18)",
-    animation: "ringReverse 8s linear infinite",
-  },
-
-  heroCard: {
-    width: "min(470px, 90vw)",
-    padding: "20px",
-    borderRadius: "28px",
-    background: "rgba(255,255,255,.045)",
-    border: "1px solid rgba(255,255,255,.11)",
-    backdropFilter: "blur(18px)",
-    position: "relative",
-    zIndex: 2,
-    boxShadow: "0 30px 100px rgba(0,0,0,.35)",
-  },
-
-  heroCardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    color: "#77849f",
-    fontSize: "9px",
-    letterSpacing: "1.5px",
-    fontWeight: 800,
-  },
-
-  live: {
-    color: "#45e3a5",
+  heroMiniStats: {
     display: "flex",
     alignItems: "center",
-    gap: "5px",
+    gap: "24px",
+    marginTop: "48px",
   },
 
-  heroBody: {
-    height: "420px",
-    position: "relative",
-    marginTop: "5px",
+  miniNumber: {
+    display: "block",
+    fontSize: "18px",
+    color: "#ffffff",
   },
 
-  floatScore: {
-    position: "absolute",
-    left: "-35px",
-    top: "80px",
-    padding: "13px",
-    borderRadius: "14px",
-    background: "rgba(5,12,25,.88)",
-    border: "1px solid rgba(0,217,255,.2)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "3px",
-  },
-
-  floatStatus: {
-    position: "absolute",
-    right: "-35px",
-    top: "165px",
-    padding: "13px",
-    borderRadius: "14px",
-    background: "rgba(5,12,25,.88)",
-    border: "1px solid rgba(139,92,246,.2)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "3px",
-  },
-
-  floatEnergy: {
-    position: "absolute",
-    right: "10px",
-    bottom: "18px",
-    padding: "12px 16px",
-    borderRadius: "14px",
-    background: "rgba(5,12,25,.88)",
-    border: "1px solid rgba(0,217,255,.18)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-
-  marquee: {
-    overflow: "hidden",
-    borderTop: "1px solid rgba(255,255,255,.06)",
-    borderBottom: "1px solid rgba(255,255,255,.06)",
-    background: "rgba(255,255,255,.015)",
-    padding: "17px 0",
-  },
-
-  marqueeTrack: {
-    display: "flex",
-    width: "max-content",
-    gap: "30px",
-    color: "#63718d",
-    fontSize: "10px",
-    letterSpacing: "2px",
+  miniLabel: {
+    display: "block",
+    marginTop: "4px",
+    color: "#586560",
+    fontSize: "8px",
+    letterSpacing: "1.2px",
     fontWeight: 800,
-    animation: "marqueeMove 24s linear infinite",
+  },
+
+  miniDivider: {
+    width: "1px",
+    height: "28px",
+    background: "rgba(255,255,255,0.08)",
+  },
+
+  bodyStage: {
+    position: "relative",
+    minHeight: "640px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "28px",
+    background:
+      "radial-gradient(circle at 50% 42%, rgba(0,255,170,0.08), transparent 34%), linear-gradient(145deg, rgba(18,27,26,0.92), rgba(7,11,12,0.96))",
+    overflow: "hidden",
+    transition: "transform 0.15s ease-out",
+    boxShadow:
+      "inset 0 0 80px rgba(0,255,170,0.025), 0 35px 100px rgba(0,0,0,0.35)",
+  },
+
+  stageHeader: {
+    position: "absolute",
+    top: "22px",
+    left: "24px",
+    right: "24px",
+    display: "flex",
+    justifyContent: "space-between",
+    color: "#76817e",
+    fontSize: "9px",
+    fontWeight: 800,
+    letterSpacing: "1.5px",
+    zIndex: 5,
+  },
+
+  statusDotSmall: {
+    display: "inline-block",
+    width: "6px",
+    height: "6px",
+    borderRadius: "50%",
+    background: "#00ffaa",
+    marginRight: "7px",
+  },
+
+  liveText: {
+    color: "#00ffaa",
+  },
+
+  bodyScene: {
+    position: "absolute",
+    inset: "60px 0 120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  energyRing: {
+    position: "absolute",
+    width: "360px",
+    height: "360px",
+    border: "1px solid rgba(0,255,170,0.22)",
+    borderRadius: "50%",
+    boxShadow:
+      "0 0 30px rgba(0,255,170,0.07), inset 0 0 30px rgba(0,255,170,0.05)",
+  },
+
+  energyRingInner: {
+    position: "absolute",
+    width: "260px",
+    height: "260px",
+    border: "1px dashed rgba(0,255,170,0.16)",
+    borderRadius: "50%",
+  },
+
+  scanLine: {
+    position: "absolute",
+    width: "280px",
+    height: "2px",
+    background:
+      "linear-gradient(90deg, transparent, #00ffaa, transparent)",
+    boxShadow: "0 0 18px rgba(0,255,170,0.8)",
+    zIndex: 4,
+  },
+
+  humanBody: {
+    position: "relative",
+    width: "230px",
+    height: "490px",
+    filter:
+      "drop-shadow(0 0 18px rgba(0,255,170,0.16))",
+  },
+
+  bodyHead: {
+    position: "absolute",
+    top: "8px",
+    left: "86px",
+    width: "58px",
+    height: "68px",
+    borderRadius: "48% 48% 45% 45%",
+    background:
+      "linear-gradient(145deg, #c8fff0, #4b8776 58%, #16362e)",
+    border: "1px solid rgba(0,255,170,0.55)",
+    boxShadow:
+      "inset -8px -10px 20px rgba(0,0,0,0.35), 0 0 20px rgba(0,255,170,0.18)",
+    zIndex: 3,
+  },
+
+  faceGlow: {
+    position: "absolute",
+    width: "9px",
+    height: "9px",
+    borderRadius: "50%",
+    background: "#00ffaa",
+    top: "29px",
+    left: "14px",
+    boxShadow: "24px 0 0 #00ffaa, 12px 12px 20px rgba(0,255,170,0.5)",
+    opacity: 0.65,
+  },
+
+  neck: {
+    position: "absolute",
+    top: "68px",
+    left: "104px",
+    width: "24px",
+    height: "30px",
+    background: "linear-gradient(90deg, #356658, #9bd6c3, #315e50)",
+    borderRadius: "8px",
+    zIndex: 2,
+  },
+
+  bodyTorso: {
+    position: "absolute",
+    top: "85px",
+    left: "55px",
+    width: "120px",
+    height: "190px",
+    background:
+      "linear-gradient(90deg, #1e493d, #9ce4cf 45%, #376b5b)",
+    clipPath:
+      "polygon(18% 0, 82% 0, 100% 18%, 90% 78%, 76% 100%, 24% 100%, 10% 78%, 0 18%)",
+    border: "1px solid rgba(0,255,170,0.55)",
+    boxShadow:
+      "inset 0 0 35px rgba(255,255,255,0.12), 0 0 28px rgba(0,255,170,0.14)",
+    zIndex: 2,
+  },
+
+  chestLine: {
+    position: "absolute",
+    left: "50%",
+    top: "35px",
+    width: "1px",
+    height: "72px",
+    background: "rgba(0,50,40,0.4)",
+  },
+
+  abLineOne: {
+    position: "absolute",
+    left: "24px",
+    right: "24px",
+    top: "105px",
+    height: "1px",
+    background: "rgba(0,60,48,0.4)",
+  },
+
+  abLineTwo: {
+    position: "absolute",
+    left: "30px",
+    right: "30px",
+    top: "132px",
+    height: "1px",
+    background: "rgba(0,60,48,0.35)",
+  },
+
+  leftArm: {
+    position: "absolute",
+    top: "92px",
+    left: "21px",
+    width: "39px",
+    height: "174px",
+    borderRadius: "22px",
+    transform: "rotate(8deg)",
+    transformOrigin: "top center",
+    background:
+      "linear-gradient(90deg, #244e42, #75bbaa, #284e43)",
+    boxShadow: "0 0 20px rgba(0,255,170,0.1)",
+    zIndex: 1,
+  },
+
+  rightArm: {
+    position: "absolute",
+    top: "92px",
+    right: "21px",
+    width: "39px",
+    height: "174px",
+    borderRadius: "22px",
+    transform: "rotate(-8deg)",
+    transformOrigin: "top center",
+    background:
+      "linear-gradient(90deg, #284e43, #75bbaa, #244e42)",
+    boxShadow: "0 0 20px rgba(0,255,170,0.1)",
+    zIndex: 1,
+  },
+
+  armGlow: {
+    position: "absolute",
+    inset: "20px 8px",
+    borderRadius: "20px",
+    border: "1px solid rgba(0,255,170,0.25)",
+  },
+
+  leftLeg: {
+    position: "absolute",
+    top: "250px",
+    left: "64px",
+    width: "48px",
+    height: "210px",
+    borderRadius: "24px",
+    background:
+      "linear-gradient(90deg, #21483d, #79bfae, #294f43)",
+    transform: "rotate(2deg)",
+    zIndex: 1,
+  },
+
+  rightLeg: {
+    position: "absolute",
+    top: "250px",
+    right: "64px",
+    width: "48px",
+    height: "210px",
+    borderRadius: "24px",
+    background:
+      "linear-gradient(90deg, #294f43, #79bfae, #21483d)",
+    transform: "rotate(-2deg)",
+    zIndex: 1,
+  },
+
+  legGlow: {
+    position: "absolute",
+    inset: "20px 9px",
+    borderRadius: "20px",
+    border: "1px solid rgba(0,255,170,0.2)",
+  },
+
+  leftFoot: {
+    position: "absolute",
+    left: "52px",
+    bottom: "0",
+    width: "67px",
+    height: "23px",
+    borderRadius: "15px 25px 10px 10px",
+    background: "#18372f",
+  },
+
+  rightFoot: {
+    position: "absolute",
+    right: "52px",
+    bottom: "0",
+    width: "67px",
+    height: "23px",
+    borderRadius: "25px 15px 10px 10px",
+    background: "#18372f",
+  },
+
+  dataPoint: {
+    position: "absolute",
+    display: "flex",
+    flexDirection: "column",
+    gap: "3px",
+    fontSize: "8px",
+    color: "#52635d",
+    letterSpacing: "1px",
+  },
+
+  scoreCard: {
+    position: "absolute",
+    left: "24px",
+    right: "24px",
+    bottom: "22px",
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    padding: "13px 15px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(4,9,9,0.72)",
+    backdropFilter: "blur(18px)",
+    zIndex: 6,
+  },
+
+  scoreCircle: {
+    width: "92px",
+    height: "92px",
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  scoreNumber: {
+    position: "absolute",
+    fontSize: "24px",
+    fontWeight: 900,
+    color: "#00ffaa",
+  },
+
+  scoreTitle: {
+    fontSize: "11px",
+    fontWeight: 900,
+    letterSpacing: "1px",
+  },
+
+  scoreStatus: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    marginTop: "8px",
+    color: "#65736f",
+    fontSize: "8px",
+    letterSpacing: "1px",
+  },
+
+  scoreStatusDot: {
+    width: "5px",
+    height: "5px",
+    borderRadius: "50%",
+    background: "#00ffaa",
+  },
+
+  commandGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "12px",
+    marginTop: "18px",
+  },
+
+  commandCard: {
+    minHeight: "115px",
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    position: "relative",
+    padding: "20px",
+    borderRadius: "17px",
+    border: "1px solid rgba(255,255,255,0.07)",
+    background: "rgba(13,18,18,0.78)",
+    backdropFilter: "blur(15px)",
+  },
+
+  commandIcon: {
+    width: "38px",
+    height: "38px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "11px",
+    background: "rgba(0,255,170,0.07)",
+    fontSize: "18px",
+  },
+
+  commandLabel: {
+    color: "#62706c",
+    fontSize: "8px",
+    fontWeight: 900,
+    letterSpacing: "1.2px",
+  },
+
+  commandValue: {
+    marginTop: "5px",
+    fontSize: "20px",
+    fontWeight: 900,
+  },
+
+  unit: {
+    color: "#66736f",
+    fontSize: "9px",
+    fontWeight: 600,
+  },
+
+  commandTarget: {
+    position: "absolute",
+    top: "17px",
+    right: "17px",
+    color: "#00ffaa",
+    fontSize: "8px",
+    fontWeight: 900,
+  },
+
+  commandProgress: {
+    width: "100px",
+    height: "3px",
+    background: "rgba(255,255,255,0.07)",
+    borderRadius: "10px",
+    marginTop: "9px",
+    overflow: "hidden",
+  },
+
+  commandProgressFill: {
+    height: "100%",
+    borderRadius: "10px",
+    background: "#00ffaa",
+    boxShadow: "0 0 8px rgba(0,255,170,0.4)",
   },
 
   section: {
-    padding: "115px 7%",
+    position: "relative",
+    zIndex: 1,
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "120px 34px",
   },
 
   sectionHeader: {
-    textAlign: "center",
-    marginBottom: "55px",
+    maxWidth: "760px",
   },
 
-  sectionLabel: {
-    color: "#8875ff",
-    fontSize: "10px",
+  sectionEyebrow: {
+    color: "#00ffaa",
+    fontSize: "9px",
     fontWeight: 900,
-    letterSpacing: "2.5px",
+    letterSpacing: "2px",
+    marginBottom: "20px",
   },
 
   sectionTitle: {
-    fontSize: "clamp(38px,5vw,58px)",
-    lineHeight: 1.05,
-    letterSpacing: "-2px",
-    margin: "16px 0",
+    margin: 0,
+    fontSize: "55px",
+    lineHeight: 1,
+    letterSpacing: "-2.5px",
   },
 
   sectionDescription: {
-    color: "#737f98",
+    marginTop: "25px",
+    color: "#788581",
+    fontSize: "16px",
+    lineHeight: 1.7,
+    maxWidth: "650px",
+  },
+
+  systemPanel: {
+    marginTop: "55px",
+    minHeight: "500px",
+    borderRadius: "28px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background:
+      "linear-gradient(135deg, rgba(13,22,20,0.95), rgba(7,11,12,0.95))",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+
+  systemVisual: {
+    minHeight: "500px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    background:
+      "radial-gradient(circle, rgba(0,255,170,0.09), transparent 50%)",
+  },
+
+  systemOrb: {
+    width: "180px",
+    height: "180px",
+    borderRadius: "50%",
+    border: "1px solid rgba(0,255,170,0.35)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow:
+      "0 0 70px rgba(0,255,170,0.12), inset 0 0 40px rgba(0,255,170,0.08)",
+    zIndex: 2,
+  },
+
+  systemOrbInner: {
+    width: "110px",
+    height: "110px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(0,255,170,0.07)",
+    border: "1px solid rgba(0,255,170,0.22)",
+    color: "#00ffaa",
+    fontSize: "28px",
+    fontWeight: 950,
+  },
+
+  orbitOne: {
+    position: "absolute",
+    width: "300px",
+    height: "130px",
+    border: "1px solid rgba(0,255,170,0.15)",
+    borderRadius: "50%",
+    transform: "rotate(25deg)",
+  },
+
+  orbitTwo: {
+    position: "absolute",
+    width: "300px",
+    height: "130px",
+    border: "1px solid rgba(0,255,170,0.1)",
+    borderRadius: "50%",
+    transform: "rotate(-25deg)",
+  },
+
+  orbitThree: {
+    position: "absolute",
+    width: "240px",
+    height: "240px",
+    border: "1px dashed rgba(0,255,170,0.08)",
+    borderRadius: "50%",
+  },
+
+  systemInfo: {
+    padding: "60px",
+  },
+
+  systemItem: {
+    display: "flex",
+    gap: "25px",
+    padding: "26px 0",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+  },
+
+  systemItemSpan: {
+    color: "#00ffaa",
+  },
+
+  systemItem: {
+    display: "flex",
+    gap: "25px",
+    padding: "26px 0",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
   },
 
   featureGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3,1fr)",
-    gap: "17px",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "14px",
+    marginTop: "55px",
   },
 
   featureCard: {
     position: "relative",
-    padding: "28px",
-    minHeight: "205px",
-    borderRadius: "22px",
-    background:
-      "linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.025))",
-    border: "1px solid rgba(255,255,255,.08)",
-    transition:
-      "transform .3s ease, border-color .3s ease, box-shadow .3s ease",
+    minHeight: "340px",
+    padding: "25px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(13,18,18,0.72)",
+    cursor: "default",
+  },
+
+  featureActive: {
+    borderColor: "rgba(0,255,170,0.35)",
   },
 
   featureTop: {
@@ -1449,437 +1822,272 @@ const styles = {
     alignItems: "center",
   },
 
-  featureIcon: {
-    fontSize: "30px",
+  featureNumber: {
+    color: "#47534f",
+    fontSize: "9px",
+    fontWeight: 900,
+    letterSpacing: "1px",
   },
 
-  featureNumber: {
-    color: "#45536d",
-    fontSize: "12px",
-    fontWeight: 900,
+  featureIcon: {
+    fontSize: "26px",
+  },
+
+  featureTitle: {
+    marginTop: "70px",
+    fontSize: "20px",
+    marginBottom: "13px",
+  },
+
+  featureDescription: {
+    color: "#707d79",
+    lineHeight: 1.65,
+    fontSize: "13px",
+  },
+
+  featureLine: {
+    position: "absolute",
+    left: "25px",
+    right: "25px",
+    bottom: "45px",
+    height: "1px",
+    background: "rgba(255,255,255,0.06)",
+  },
+
+  featureLineSpan: {
+    width: "30%",
+    height: "1px",
+    background: "#00ffaa",
   },
 
   featureArrow: {
     position: "absolute",
     right: "25px",
-    bottom: "20px",
-    color: "#00d9ff",
-    fontSize: "20px",
+    bottom: "17px",
+    color: "#00ffaa",
+    fontSize: "18px",
   },
 
   aiSection: {
-    padding: "90px 7%",
     position: "relative",
-    overflow: "hidden",
+    zIndex: 1,
+    padding: "120px 34px",
+    maxWidth: "1400px",
+    margin: "0 auto",
   },
 
   aiGlow: {
     position: "absolute",
-    width: "600px",
-    height: "400px",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle,rgba(117,87,255,.18),transparent 70%)",
-    filter: "blur(70px)",
-    left: "50%",
-    top: "50%",
-    transform: "translate(-50%,-50%)",
+    width: "450px",
+    height: "450px",
+    background: "rgba(0,255,170,0.05)",
+    filter: "blur(120px)",
+    left: "-200px",
+    top: "100px",
+    pointerEvents: "none",
   },
 
-  aiCard: {
-    maxWidth: "1100px",
-    margin: "auto",
-    padding: "65px",
-    borderRadius: "32px",
-    display: "flex",
+  aiGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "70px",
     alignItems: "center",
-    gap: "55px",
-    background:
-      "linear-gradient(135deg,rgba(117,87,255,.14),rgba(0,217,255,.045))",
-    border: "1px solid rgba(255,255,255,.1)",
-    position: "relative",
-    zIndex: 2,
-  },
-
-  aiVisual: {
-    width: "180px",
-    height: "180px",
-    position: "relative",
-    display: "grid",
-    placeItems: "center",
-    flexShrink: 0,
-  },
-
-  aiRingOne: {
-    position: "absolute",
-    inset: 0,
-    borderRadius: "50%",
-    border: "1px solid rgba(0,217,255,.3)",
-    animation: "ringRotate 6s linear infinite",
-  },
-
-  aiRingTwo: {
-    position: "absolute",
-    inset: "18px",
-    borderRadius: "50%",
-    border: "1px dashed rgba(139,92,246,.35)",
-    animation: "ringReverse 5s linear infinite",
-  },
-
-  aiCore: {
-    width: "105px",
-    height: "105px",
-    borderRadius: "50%",
-    display: "grid",
-    placeItems: "center",
-    background: "linear-gradient(135deg,#7557ff,#00d9ff)",
-    boxShadow: "0 0 70px rgba(0,217,255,.28)",
-    animation: "corePulse 2s ease-in-out infinite",
-  },
-
-  aiCore: {
-    width: "105px",
-    height: "105px",
-    borderRadius: "50%",
-    display: "grid",
-    placeItems: "center",
-    background: "linear-gradient(135deg,#7557ff,#00d9ff)",
-    boxShadow: "0 0 70px rgba(0,217,255,.28)",
-    animation: "corePulse 2s ease-in-out infinite",
-  },
-
-  aiContent: {
-    flex: 1,
   },
 
   aiTitle: {
-    fontSize: "clamp(35px,4vw,52px)",
-    lineHeight: 1,
-    letterSpacing: "-2px",
-    margin: "15px 0",
-  },
-
-  aiText: {
-    color: "#8d99b2",
-    lineHeight: 1.8,
-    maxWidth: "600px",
-  },
-
-  progressDashboard: {
-    maxWidth: "1050px",
-    margin: "auto",
-    padding: "35px",
-    borderRadius: "25px",
-    background: "rgba(255,255,255,.045)",
-    border: "1px solid rgba(255,255,255,.08)",
-  },
-
-  progressTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  mutedLabel: {
-    color: "#66738b",
-    fontSize: "9px",
-    letterSpacing: "2px",
-  },
-
-  progressTitle: {
-    fontSize: "23px",
-    marginTop: "8px",
-  },
-
-  scoreCircle: {
-    width: "72px",
-    height: "72px",
-    borderRadius: "50%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "2px solid #00d9ff",
-    boxShadow: "0 0 25px rgba(0,217,255,.15)",
-  },
-
-  chart: {
-    height: "230px",
-    display: "flex",
-    alignItems: "end",
-    gap: "12px",
-    marginTop: "30px",
-  },
-
-  chartColumn: {
-    flex: 1,
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "end",
-    alignItems: "center",
-    gap: "8px",
-  },
-
-  chartBarArea: {
-    width: "100%",
-    height: "90%",
-    display: "flex",
-    alignItems: "end",
-    justifyContent: "center",
-  },
-
-  chartBar: {
-    width: "70%",
-    maxWidth: "45px",
-    minHeight: "15px",
-    borderRadius: "8px 8px 3px 3px",
-    background: "linear-gradient(180deg,#8c6cff,#00d9ff)",
-    boxShadow: "0 0 20px rgba(0,217,255,.1)",
-  },
-
-  analytics: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4,1fr)",
-    gap: "12px",
-    marginTop: "25px",
-  },
-
-  techSection: {
-    padding: "100px 7%",
-    textAlign: "center",
-    borderTop: "1px solid rgba(255,255,255,.05)",
-  },
-
-  techTitle: {
-    fontSize: "clamp(36px,5vw,58px)",
-    lineHeight: 1,
-    margin: "18px 0 45px",
-    letterSpacing: "-2px",
-  },
-
-  techGrid: {
-    maxWidth: "900px",
-    margin: "auto",
-    display: "grid",
-    gridTemplateColumns: "repeat(4,1fr)",
-    gap: "12px",
-  },
-
-  techItem: {
-    padding: "18px 12px",
-    borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,.08)",
-    background: "rgba(255,255,255,.03)",
-    color: "#8793ab",
-    fontSize: "10px",
-    letterSpacing: "1px",
-    fontWeight: 800,
-    transition: "transform .25s ease, border-color .25s ease",
-  },
-
-  finalSection: {
-    minHeight: "520px",
-    padding: "100px 7%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  finalGlow: {
-    position: "absolute",
-    width: "550px",
-    height: "320px",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle,rgba(117,87,255,.2),transparent 70%)",
-    filter: "blur(55px)",
-  },
-
-  finalTitle: {
-    fontSize: "clamp(42px,6vw,70px)",
+    fontSize: "62px",
     lineHeight: 1,
     letterSpacing: "-3px",
-    margin: "18px 0",
-    position: "relative",
+    margin: 0,
   },
 
-  finalText: {
-    color: "#78849e",
-    position: "relative",
-  },
-
-  finalButton: {
+  aiDescription: {
+    color: "#788581",
+    fontSize: "16px",
+    lineHeight: 1.7,
+    maxWidth: "600px",
     marginTop: "25px",
-    padding: "16px 28px",
-    border: "none",
+  },
+
+  aiFeatures: {
+    marginTop: "35px",
+    display: "grid",
+    gap: "14px",
+  },
+
+  aiFeature: {
+    color: "#a7b1ae",
+    fontSize: "13px",
+  },
+
+  aiFeatureSpan: {
+    color: "#00ffaa",
+    marginRight: "10px",
+  },
+
+  aiTerminal: {
+    borderRadius: "20px",
+    overflow: "hidden",
+    border: "1px solid rgba(0,255,170,0.14)",
+    background: "#060a0a",
+    boxShadow: "0 30px 90px rgba(0,0,0,0.35)",
+  },
+
+  terminalHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 18px",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    color: "#56625e",
+    fontSize: "8px",
+    letterSpacing: "1.2px",
+  },
+
+  terminalDots: {
+    display: "flex",
+    gap: "5px",
+  },
+
+  terminalLive: {
+    color: "#00ffaa",
+  },
+
+  terminalBody: {
+    padding: "28px",
+    fontFamily: "monospace",
+    minHeight: "330px",
+  },
+
+  terminalLine: {
+    color: "#63716c",
+    fontSize: "11px",
+    lineHeight: 2.1,
+  },
+
+  terminalGreen: {
+    color: "#00ffaa",
+  },
+
+  terminalResult: {
+    margin: "25px 0",
+    padding: "20px",
     borderRadius: "13px",
-    background: "linear-gradient(135deg,#7557ff,#00d9ff)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer",
+    background: "rgba(0,255,170,0.045)",
+    border: "1px solid rgba(0,255,170,0.1)",
+    color: "#62716b",
+    fontSize: "9px",
+    letterSpacing: "1px",
+  },
+
+  aiRecommendation: {
+    marginTop: "20px",
+    padding: "17px",
+    borderLeft: "2px solid #00ffaa",
+    background: "rgba(0,255,170,0.035)",
+    color: "#8a9893",
+    fontFamily: "Inter, Arial",
+    fontSize: "12px",
+    lineHeight: 1.7,
+  },
+
+  terminalCursor: {
+    marginTop: "18px",
+    color: "#00ffaa",
+    animation: "dataPulse 1s infinite",
+  },
+
+  ctaSection: {
     position: "relative",
-    boxShadow: "0 15px 45px rgba(0,217,255,.12)",
+    zIndex: 1,
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "80px 34px 120px",
+  },
+
+  ctaBox: {
+    position: "relative",
+    textAlign: "center",
+    overflow: "hidden",
+    borderRadius: "28px",
+    border: "1px solid rgba(0,255,170,0.16)",
+    background:
+      "radial-gradient(circle at 50% 0%, rgba(0,255,170,0.11), transparent 45%), rgba(12,18,17,0.92)",
+    padding: "90px 30px",
+  },
+
+  ctaGlow: {
+    position: "absolute",
+    width: "400px",
+    height: "400px",
+    background: "rgba(0,255,170,0.08)",
+    filter: "blur(100px)",
+    left: "50%",
+    top: "-280px",
+    transform: "translateX(-50%)",
+    pointerEvents: "none",
+  },
+
+  ctaTitle: {
+    position: "relative",
+    margin: 0,
+    fontSize: "72px",
+    lineHeight: 0.95,
+    letterSpacing: "-4px",
+  },
+
+  ctaDescription: {
+    position: "relative",
+    maxWidth: "560px",
+    margin: "25px auto 0",
+    color: "#788581",
+    lineHeight: 1.7,
+  },
+
+  ctaButton: {
+    position: "relative",
+    marginTop: "32px",
+    border: "none",
+    background: "#00ffaa",
+    color: "#03100c",
+    padding: "17px 25px",
+    borderRadius: "12px",
+    fontSize: "11px",
+    fontWeight: 900,
+    letterSpacing: "1px",
+    cursor: "pointer",
   },
 
   footer: {
-    padding: "35px 7%",
-    borderTop: "1px solid rgba(255,255,255,.06)",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    position: "relative",
+    zIndex: 2,
+    borderTop: "1px solid rgba(255,255,255,0.06)",
+    padding: "35px 34px",
+    maxWidth: "1400px",
+    margin: "0 auto",
+  },
+
+  footerLogo: {
+    color: "#00ffaa",
+    fontSize: "12px",
+    fontWeight: 900,
+    letterSpacing: "2px",
   },
 
   footerText: {
-    color: "#56627a",
-    fontSize: "11px",
+    marginTop: "8px",
+    color: "#52605b",
+    fontSize: "10px",
+  },
+
+  footerBottom: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "30px",
+    color: "#3e4945",
+    fontSize: "8px",
+    letterSpacing: "1px",
   },
 };
-
-/* =========================================================
-   ANIMATIONS
-========================================================= */
-
-if (typeof document !== "undefined") {
-  const styleId = "ai-fit-track-premium-animations";
-
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement("style");
-
-    style.id = styleId;
-
-    style.innerHTML = `
-      @keyframes ringRotate {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      @keyframes ringReverse {
-        from {
-          transform: rotate(360deg);
-        }
-        to {
-          transform: rotate(0deg);
-        }
-      }
-
-      @keyframes coreGlow {
-        0%,100% {
-          transform: scale(.9);
-          opacity: .5;
-        }
-
-        50% {
-          transform: scale(1.08);
-          opacity: 1;
-        }
-      }
-
-      @keyframes corePulse {
-        0%,100% {
-          transform: scale(1);
-          box-shadow: 0 0 45px rgba(0,217,255,.2);
-        }
-
-        50% {
-          transform: scale(1.06);
-          box-shadow: 0 0 85px rgba(0,217,255,.4);
-        }
-      }
-
-      @keyframes fitParticle {
-        0%,100% {
-          opacity: .1;
-          transform: translateY(0) scale(.7);
-        }
-
-        50% {
-          opacity: 1;
-          transform: translateY(-18px) scale(1.2);
-        }
-      }
-
-      @keyframes marqueeMove {
-        from {
-          transform: translateX(0);
-        }
-
-        to {
-          transform: translateX(-50%);
-        }
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        margin: 0;
-        background: #040711;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      button {
-        font-family: inherit;
-      }
-
-      .ai-fit-hover-card {
-        transition:
-          transform .3s ease,
-          border-color .3s ease,
-          box-shadow .3s ease;
-      }
-
-      @media (hover:hover) {
-        .ai-fit-hover-card:hover {
-          transform: translateY(-8px);
-          border-color: rgba(0,217,255,.25);
-          box-shadow: 0 25px 60px rgba(0,0,0,.2);
-        }
-      }
-
-      @media (max-width: 900px) {
-        .ai-fit-hide-mobile {
-          display: none;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .ai-fit-mobile-nav {
-          display: none;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: .01ms !important;
-          animation-iteration-count: 1 !important;
-          scroll-behavior: auto !important;
-          transition-duration: .01ms !important;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
-}
 
 export default App;
