@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 
 function AIInsights({
   height,
@@ -15,6 +15,7 @@ function AIInsights({
   const [error, setError] = useState("");
 
   const getAIAnalysis = async () => {
+  
     if (!height || !weight || !age) {
       setAnalysis(null);
       setError("Please enter your height, weight and age first.");
@@ -119,17 +120,8 @@ function AIInsights({
   };
 
   useEffect(() => {
-    if (height && weight && age) {
-      getAIAnalysis();
-    }
-  }, [
-    height,
-    weight,
-    age,
-    steps,
-    water,
-    workouts,
-  ]);
+  // Automatic AI analysis temporarily disabled.
+}, []);
 
   return (
     <div>
