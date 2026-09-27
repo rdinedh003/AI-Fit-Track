@@ -286,44 +286,66 @@ const fitnessGoal =
       ========================= */}
 
       <header style={styles.header}>
-        <div>
-          <p style={styles.logoSmall}>
-            AI FIT TRACK
-          </p>
+        <div style={styles.headerGlow} />
+
+        <div style={styles.headerLeft}>
+          <div style={styles.brandRow}>
+            <div style={styles.brandMark}>AI</div>
+
+            <div>
+              <p style={styles.logoSmall}>AI FIT TRACK</p>
+              <div style={styles.liveStatus}>
+                <span style={styles.liveDot} />
+                AI FITNESS SYSTEM ONLINE
+              </div>
+            </div>
+          </div>
 
           <h1 style={styles.title}>
             Welcome back{" "}
             <span style={styles.green}>
               {user?.name || "Athlete"}
             </span>{" "}
-            👋
+            <span style={styles.wave}>👋</span>
           </h1>
 
           <p style={styles.subtitle}>
-            Your AI-powered fitness dashboard
+            Your AI-powered fitness dashboard is ready.
+            <span style={styles.subtitleAccent}>
+              {" "}Keep moving. Keep improving.
+            </span>
           </p>
         </div>
 
         <div style={styles.profile}>
-          <div style={styles.avatar}>
-            {(user?.name || "A").charAt(0).toUpperCase()}
+          <div style={styles.avatarWrap}>
+            <div style={styles.avatar}>
+              {(user?.name || "A").charAt(0).toUpperCase()}
+            </div>
+            <span style={styles.avatarOnline} />
           </div>
 
           <div style={styles.profileInfo}>
-            <strong>
+            <strong style={styles.profileName}>
               {user?.name || "Athlete"}
             </strong>
 
             <small style={styles.profileSmall}>
-              LEVEL {level}
+              LEVEL {level} • {xp} XP
             </small>
 
-            <button
-              onClick={handleLogout}
-              style={styles.logoutButton}
-            >
-              Logout
-            </button>
+            <div style={styles.profileActions}>
+              <span style={styles.goalPill}>
+                🎯 {fitnessGoal}
+              </span>
+
+              <button
+                onClick={handleLogout}
+                style={styles.logoutButton}
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -1248,12 +1270,125 @@ const styles = {
   },
 
   header: {
+    position: "relative",
     maxWidth: "1250px",
     margin: "0 auto 35px",
+    padding: "22px 24px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "20px",
+    gap: "24px",
+    flexWrap: "wrap",
+    border: "1px solid rgba(51,65,85,0.75)",
+    borderRadius: "28px",
+    background: "linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.88))",
+    boxShadow: "0 25px 80px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.03)",
+    overflow: "hidden",
+  },
+
+  headerGlow: {
+    position: "absolute",
+    top: "-90px",
+    left: "18%",
+    width: "420px",
+    height: "180px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle,rgba(34,197,94,0.13),transparent 70%)",
+    filter: "blur(10px)",
+    pointerEvents: "none",
+  },
+
+  headerLeft: {
+    position: "relative",
+    zIndex: 1,
+    minWidth: 0,
+  },
+
+  brandRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "11px",
+    marginBottom: "13px",
+  },
+
+  brandMark: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "11px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(135deg,#22c55e,#06b6d4)",
+    color: "#020617",
+    fontSize: "11px",
+    fontWeight: "950",
+    boxShadow: "0 8px 25px rgba(34,197,94,0.2)",
+  },
+
+  liveStatus: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    color: "#64748b",
+    fontSize: "8px",
+    fontWeight: "800",
+    letterSpacing: "1.2px",
+    marginTop: "3px",
+  },
+
+  liveDot: {
+    width: "6px",
+    height: "6px",
+    borderRadius: "50%",
+    background: "#22c55e",
+    boxShadow: "0 0 12px rgba(34,197,94,0.9)",
+  },
+
+  avatarWrap: {
+    position: "relative",
+    flexShrink: 0,
+  },
+
+  avatarOnline: {
+    position: "absolute",
+    right: "0",
+    bottom: "1px",
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    background: "#22c55e",
+    border: "2px solid #0f172a",
+    boxShadow: "0 0 10px rgba(34,197,94,0.7)",
+  },
+
+  profileName: {
+    fontSize: "13px",
+  },
+
+  profileActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "7px",
+    flexWrap: "wrap",
+    marginTop: "7px",
+  },
+
+  goalPill: {
+    padding: "5px 8px",
+    borderRadius: "8px",
+    background: "rgba(34,211,238,0.07)",
+    border: "1px solid rgba(34,211,238,0.14)",
+    color: "#67e8f9",
+    fontSize: "8px",
+    fontWeight: "800",
+    maxWidth: "150px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  wave: {
+    display: "inline-block",
   },
 
   logoSmall: {
@@ -1266,8 +1401,10 @@ const styles = {
 
   title: {
     fontSize: "38px",
+    lineHeight: "1.08",
     margin: "0",
-    fontWeight: "800",
+    fontWeight: "850",
+    letterSpacing: "-1.2px",
   },
 
   green: {
@@ -1276,17 +1413,26 @@ const styles = {
 
   subtitle: {
     color: "#94a3b8",
-    marginTop: "8px",
+    marginTop: "9px",
+    fontSize: "13px",
+    lineHeight: "1.6",
+  },
+
+  subtitleAccent: {
+    color: "#64748b",
   },
 
   profile: {
+    position: "relative",
+    zIndex: 1,
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "10px 15px",
-    border: "1px solid #1e293b",
-    background: "rgba(15,23,42,0.8)",
+    padding: "10px 13px",
+    border: "1px solid rgba(51,65,85,0.8)",
+    background: "rgba(2,6,23,0.68)",
     borderRadius: "18px",
+    boxShadow: "0 12px 35px rgba(0,0,0,0.22)",
   },
 
   profileInfo: {

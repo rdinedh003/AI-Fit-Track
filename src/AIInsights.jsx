@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const API_URL = "http://localhost:8000";
+
 function AIInsights({
   height,
   weight,
@@ -14,6 +16,7 @@ function AIInsights({
 
   const getAIAnalysis = async () => {
     if (!height || !weight || !age) {
+      setAnalysis(null);
       setError("Please enter your height, weight and age first.");
       return;
     }
@@ -22,36 +25,94 @@ function AIInsights({
       setLoading(true);
       setError("");
 
+      // First check whether FastAPI is reachable
+      const healthResponse = await fetch(
+        `${API_URL}/health`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!healthResponse.ok) {
+        throw new Error(
+          `Backend health check failed: ${healthResponse.status}`
+        );
+      }
+
+      // Send fitness data
       const response = await fetch(
-        "http://127.0.0.1:8000/fitness-analysis",
+        `${API_URL}/fitness-analysis`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify({
             height: Number(height),
             weight: Number(weight),
             age: Number(age),
-            steps: Number(steps),
-            water: Number(water),
-            workouts: Number(workouts),
+            steps: Number(steps || 0),
+            water: Number(water || 0),
+            workouts: Number(workouts || 0),
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("AI analysis request failed");
+        let backendMessage = "AI analysis request failed.";
+
+        try {
+          const errorData = await response.json();
+
+          if (errorData?.detail) {
+            backendMessage = errorData.detail;
+          }
+        } catch {
+          // Ignore JSON parsing errors
+        }
+
+        throw new Error(backendMessage);
       }
 
       const result = await response.json();
 
+      if (!result?.success) {
+        throw new Error(
+          "Backend returned an unsuccessful response."
+        );
+      }
+
+      if (!result?.analysis) {
+        throw new Error(
+          "AI analysis data was not returned by the backend."
+        );
+      }
+
       setAnalysis(result.analysis);
+      setError("");
     } catch (err) {
-      console.error(err);
-      setError(
-        "Unable to connect to AI backend. Make sure FastAPI is running."
-      );
+      console.error("AI Fitness Analysis Error:", err);
+
+      setAnalysis(null);
+
+      if (
+        err instanceof TypeError ||
+        err?.message?.includes("Failed to fetch") ||
+        err?.message?.includes("NetworkError")
+      ) {
+        setError(
+          "AI backend connection failed. Please check that FastAPI is running on port 8000."
+        );
+      } else {
+        setError(
+          err?.message ||
+            "Unable to analyze your fitness data."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -61,10 +122,18 @@ function AIInsights({
     if (height && weight && age) {
       getAIAnalysis();
     }
-  }, [height, weight, age, steps, water, workouts]);
+  }, [
+    height,
+    weight,
+    age,
+    steps,
+    water,
+    workouts,
+  ]);
 
   return (
     <div>
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
@@ -112,39 +181,77 @@ function AIInsights({
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Analyzing..." : "✨ Analyze Again"}
+          {loading
+            ? "🧠 Analyzing..."
+            : "✨ Analyze Again"}
         </button>
       </div>
 
+      {/* ERROR */}
       {error && (
         <div
           style={{
             padding: "14px",
             borderRadius: "12px",
             background: "rgba(239,68,68,0.1)",
-            border: "1px solid rgba(239,68,68,0.3)",
+            border:
+              "1px solid rgba(239,68,68,0.3)",
             color: "#fca5a5",
             fontSize: "13px",
             marginBottom: "15px",
+            lineHeight: 1.6,
           }}
         >
           ⚠️ {error}
         </div>
       )}
 
+      {/* LOADING */}
       {loading && !analysis && (
         <div
           style={{
             padding: "30px",
             textAlign: "center",
             color: "#a78bfa",
+            borderRadius: "14px",
+            background:
+              "rgba(139,92,246,0.06)",
+            border:
+              "1px solid rgba(139,92,246,0.15)",
           }}
         >
-          🧠 AI is analyzing your fitness data...
+          <div
+            style={{
+              fontSize: "28px",
+              marginBottom: "10px",
+            }}
+          >
+            🧠
+          </div>
+
+          <div
+            style={{
+              fontWeight: "700",
+              marginBottom: "5px",
+            }}
+          >
+            AI is analyzing your fitness data...
+          </div>
+
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#94a3b8",
+            }}
+          >
+            Checking activity, hydration,
+            workouts and BMI
+          </div>
         </div>
       )}
 
-      {analysis && (
+      {/* ANALYSIS */}
+      {analysis && !loading && (
         <div
           style={{
             display: "grid",
@@ -158,7 +265,8 @@ function AIInsights({
               borderRadius: "14px",
               background:
                 "linear-gradient(135deg,rgba(139,92,246,0.12),rgba(99,102,241,0.06))",
-              border: "1px solid rgba(139,92,246,0.2)",
+              border:
+                "1px solid rgba(139,92,246,0.2)",
             }}
           >
             <div
@@ -178,6 +286,7 @@ function AIInsights({
                 alignItems: "baseline",
                 gap: "10px",
                 marginTop: "8px",
+                flexWrap: "wrap",
               }}
             >
               <strong
@@ -200,13 +309,15 @@ function AIInsights({
             </div>
           </div>
 
-          {/* Steps */}
+          {/* STEPS */}
           <div
             style={{
               padding: "16px",
               borderRadius: "14px",
-              background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.15)",
+              background:
+                "rgba(34,197,94,0.06)",
+              border:
+                "1px solid rgba(34,197,94,0.15)",
             }}
           >
             <strong
@@ -230,13 +341,15 @@ function AIInsights({
             </p>
           </div>
 
-          {/* Water */}
+          {/* WATER */}
           <div
             style={{
               padding: "16px",
               borderRadius: "14px",
-              background: "rgba(14,165,233,0.06)",
-              border: "1px solid rgba(14,165,233,0.15)",
+              background:
+                "rgba(14,165,233,0.06)",
+              border:
+                "1px solid rgba(14,165,233,0.15)",
             }}
           >
             <strong
@@ -260,13 +373,15 @@ function AIInsights({
             </p>
           </div>
 
-          {/* Workout */}
+          {/* WORKOUT */}
           <div
             style={{
               padding: "16px",
               borderRadius: "14px",
-              background: "rgba(249,115,22,0.06)",
-              border: "1px solid rgba(249,115,22,0.15)",
+              background:
+                "rgba(249,115,22,0.06)",
+              border:
+                "1px solid rgba(249,115,22,0.15)",
             }}
           >
             <strong
@@ -290,14 +405,15 @@ function AIInsights({
             </p>
           </div>
 
-          {/* Overall */}
+          {/* OVERALL AI INSIGHT */}
           <div
             style={{
               padding: "18px",
               borderRadius: "14px",
               background:
                 "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(16,185,129,0.05))",
-              border: "1px solid rgba(34,197,94,0.2)",
+              border:
+                "1px solid rgba(34,197,94,0.2)",
             }}
           >
             <strong
